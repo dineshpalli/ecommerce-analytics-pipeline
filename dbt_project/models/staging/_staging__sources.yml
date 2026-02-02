@@ -1,0 +1,75 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw event data loaded from ETL pipeline
+    schema: raw
+    tables:
+      - name: events
+        description: Raw e-commerce events
+        columns:
+          - name: event_id
+            description: Unique identifier for each event
+            tests:
+              - not_null
+              - unique
+          - name: event_type
+            description: Type of event (page_view, purchase, etc.)
+            tests:
+              - not_null
+          - name: user_id
+            description: Identifier for the user who triggered the event
+            tests:
+              - not_null
+          - name: session_id
+            description: Session identifier
+          - name: timestamp
+            description: When the event occurred
+            tests:
+              - not_null
+          - name: properties
+            description: JSON blob with event-specific properties
+          - name: device
+            description: Device type (mobile, desktop, tablet)
+          - name: country
+            description: Two-letter country code
+          - name: traffic_source
+            description: How the user arrived (organic, paid, etc.)
+          - name: product_id
+            description: Product involved in the event (if applicable)
+          - name: category
+            description: Product category
+          - name: revenue
+            description: Revenue generated (purchases only)
+
+  - name: seeds
+    description: Reference data loaded as seeds
+    schema: seeds
+    tables:
+      - name: products
+        description: Product catalog
+        columns:
+          - name: product_id
+            description: Unique product identifier
+            tests:
+              - not_null
+              - unique
+          - name: product_name
+            description: Product display name
+          - name: category
+            description: Product category
+          - name: price
+            description: Product price in USD
+
+      - name: users
+        description: User profiles (no PII)
+        columns:
+          - name: user_id
+            description: Unique user identifier
+            tests:
+              - not_null
+              - unique
+          - name: segment
+            description: User behavioral segment
+          - name: created_at
+            description: Account creation timestamp

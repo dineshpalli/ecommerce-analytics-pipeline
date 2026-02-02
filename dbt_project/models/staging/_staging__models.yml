@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  - name: stg_events
+    description: |
+      Cleaned and standardized event data.
+      One row per event with parsed properties and derived fields.
+    columns:
+      - name: event_id
+        description: Unique identifier for the event
+        tests:
+          - not_null
+          - unique
+      - name: event_type
+        description: Type of event
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['page_view', 'product_view', 'add_to_cart', 'remove_from_cart',
+                       'begin_checkout', 'purchase', 'search', 'signup', 'login']
+      - name: user_id
+        description: User who triggered the event
+        tests:
+          - not_null
+      - name: session_id
+        description: Session identifier
+        tests:
+          - not_null
+      - name: event_timestamp
+        description: When the event occurred (UTC)
+        tests:
+          - not_null
+      - name: event_date
+        description: Date of the event
+        tests:
+          - not_null
+      - name: device_type
+        description: Device used
+        tests:
+          - accepted_values:
+              values: ['mobile', 'desktop', 'tablet', 'unknown']
+      - name: country_code
+        description: Two-letter country code
+      - name: traffic_source
+        description: Traffic acquisition source
+        tests:
+          - accepted_values:
+              values: ['organic', 'paid_search', 'social', 'email', 'direct', 'referral']
+      - name: product_id
+        description: Product ID (if applicable)
+      - name: product_category
+        description: Product category
+      - name: revenue_amount
+        description: Revenue in USD (0 for non-purchase events)
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: is_revenue_event
+        description: Boolean flag for purchase events with revenue
+
+  - name: stg_products
+    description: |
+      Cleaned product catalog with derived attributes.
+      One row per product.
+    columns:
+      - name: product_id
+        description: Unique product identifier
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        description: Product display name
+        tests:
+          - not_null
+      - name: category
+        description: Product category
+        tests:
+          - not_null
+      - name: price
+        description: Price in USD
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+      - name: price_tier
+        description: Price tier classification
+        tests:
+          - accepted_values:
+              values: ['Budget', 'Mid-Range', 'Premium', 'Luxury']
+      - name: rating
+        description: Average customer rating (0-5)
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 5
+              inclusive: true
+
+  - name: stg_users
+    description: |
+      Cleaned user profiles with derived attributes.
+      One row per user.
+    columns:
+      - name: user_id
+        description: Unique user identifier
+        tests:
+          - not_null
+          - unique
+      - name: user_segment
+        description: Behavioral segment
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['power_buyer', 'browser', 'occasional', 'new_user', 'unknown']
+      - name: tenure_tier
+        description: Account age classification
+        tests:
+          - accepted_values:
+              values: ['New', 'Developing', 'Established', 'Veteran']

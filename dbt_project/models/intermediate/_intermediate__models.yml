@@ -1,0 +1,104 @@
+version: 2
+
+models:
+  - name: int_sessions
+    description: |
+      Session-level aggregations with engagement metrics.
+      One row per session, enriched with duration and quality classifications.
+    columns:
+      - name: session_id
+        description: Unique session identifier
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: User who owned the session
+        tests:
+          - not_null
+      - name: session_start
+        description: Timestamp of first event in session
+        tests:
+          - not_null
+      - name: session_end
+        description: Timestamp of last event in session
+        tests:
+          - not_null
+      - name: session_duration_seconds
+        description: Total session duration in seconds
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: is_converted
+        description: Whether session resulted in a purchase
+        tests:
+          - not_null
+      - name: session_quality
+        description: Quality classification based on engagement
+        tests:
+          - accepted_values:
+              values: ['High Value', 'High Intent', 'Engaged', 'Browsing', 'Low Engagement']
+
+  - name: int_user_journey
+    description: |
+      User funnel progression tracking.
+      One row per user per session, showing funnel stage reached.
+    columns:
+      - name: user_id
+        description: User identifier
+        tests:
+          - not_null
+      - name: session_id
+        description: Session identifier
+        tests:
+          - not_null
+      - name: deepest_stage
+        description: Deepest funnel stage reached
+        tests:
+          - accepted_values:
+              values: ['none', 'page_view', 'product_view', 'cart', 'checkout', 'purchase']
+      - name: funnel_depth
+        description: Numeric representation of funnel depth (0-5)
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 5
+              inclusive: true
+      - name: drop_off_stage
+        description: Where the user dropped off in the funnel
+        tests:
+          - accepted_values:
+              values: ['converted', 'checkout_abandoned', 'cart_abandoned', 'product_exit', 'landing_bounce', 'no_engagement']
+
+  - name: int_product_performance
+    description: |
+      Product-level performance metrics.
+      One row per product with views, conversions, and revenue.
+    columns:
+      - name: product_id
+        description: Unique product identifier
+        tests:
+          - not_null
+          - unique
+      - name: total_views
+        description: Total number of product views
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: view_to_cart_rate
+        description: Rate of views that result in cart additions
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+      - name: overall_conversion_rate
+        description: Rate of views that result in purchases
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true

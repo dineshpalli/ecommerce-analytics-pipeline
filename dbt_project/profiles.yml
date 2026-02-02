@@ -1,0 +1,31 @@
+ecommerce_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: '../data/analytics.duckdb'
+      threads: 4
+
+    # Production BigQuery configuration (template)
+    # Uncomment and configure for production
+    # prod:
+    #   type: bigquery
+    #   method: service-account
+    #   project: your-gcp-project
+    #   dataset: analytics
+    #   threads: 8
+    #   timeout_seconds: 300
+    #   location: US
+    #   keyfile: /path/to/keyfile.json
+
+    # Production Snowflake configuration (template)
+    # prod_snowflake:
+    #   type: snowflake
+    #   account: your-account
+    #   user: your-user
+    #   password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+    #   role: transformer
+    #   database: analytics
+    #   warehouse: transforming
+    #   schema: public
+    #   threads: 8
