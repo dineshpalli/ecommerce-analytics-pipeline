@@ -20,46 +20,53 @@ This project demonstrates a **production-grade analytics pipeline** for an e-com
 ## Architecture
 
 ```mermaid
-flowchart LR
-    subgraph Sources ["SOURCE SYSTEMS"]
-        E["Events\n(JSON/Parquet)"]
-        P["Product\nCatalog"]
-        U["User\nProfiles"]
-    end
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#bd93f9', 'primaryTextColor': '#f8f8f2', 'primaryBorderColor': '#6272a4', 'lineColor': '#ff79c6', 'secondaryColor': '#44475a', 'tertiaryColor': '#282a36', 'background': '#282a36', 'mainBkg': '#282a36', 'nodeBorder': '#6272a4', 'clusterBkg': '#44475a', 'clusterBorder': '#6272a4', 'titleColor': '#f8f8f2', 'edgeLabelBackground': '#282a36'}}}%%
 
-    subgraph Ingestion ["INGESTION LAYER — Python"]
-        EX["Extract\n(Pandas)"]
-        VA["Validate\n(Pydantic)"]
-        LO["Load\n(Parquet)"]
-        EX --> VA --> LO
-    end
-
-    subgraph Storage ["DATA LAKE"]
-        RAW["raw/"]
-        PROC["processed/"]
-        SEED["seeds/"]
-    end
-
-    subgraph dbt ["TRANSFORMATION LAYER — dbt"]
+flowchart TB
+    subgraph Sources [" 🔌 SOURCE SYSTEMS"]
         direction LR
-        STG["Staging\n─────────\nstg_events\nstg_products\nstg_users"]
-        INT["Intermediate\n─────────\nint_sessions\nint_user_journey\nint_product_perf"]
-        MART["Marts\n─────────\nfct_daily_engagement\nfct_funnel · fct_revenue\ndim_users · dim_products\ndim_date"]
-        STG --> INT --> MART
+        E["📡 Events<br/><i>JSON / Parquet</i>"]
+        P["📦 Product Catalog"]
+        U["👤 User Profiles"]
     end
 
-    subgraph DWH ["DATA WAREHOUSE"]
-        DB[("DuckDB\n(dev)\n─────────\nBigQuery / Snowflake\n(prod)")]
+    subgraph Ingestion [" ⚙️ INGESTION LAYER"]
+        direction LR
+        EX["Extract<br/><i>Pandas</i>"]
+        VA["Validate<br/><i>Pydantic</i>"]
+        LO["Load<br/><i>Parquet</i>"]
+        EX -->|"raw data"| VA -->|"clean data"| LO
     end
 
-    subgraph Presentation ["PRESENTATION LAYER"]
-        DASH["Streamlit\nDashboard"]
-        DOCS["dbt Docs\n& Lineage"]
+    subgraph Storage [" 🗄️ DATA LAKE"]
+        direction LR
+        RAW["📁 raw/"]
+        PROC["📁 processed/"]
+        SEED["📁 seeds/"]
     end
 
-    subgraph QA ["QUALITY & CI/CD"]
-        TESTS["pytest · dbt test\nGreat Expectations"]
-        CI["GitHub Actions\nLint → Test → Build"]
+    subgraph Transform [" 🔄 TRANSFORMATION — dbt"]
+        direction LR
+        STG["<b>Staging</b><br/>stg_events<br/>stg_products<br/>stg_users"]
+        INT["<b>Intermediate</b><br/>int_sessions<br/>int_user_journey<br/>int_product_perf"]
+        MART["<b>Marts</b><br/>fct_daily_engagement<br/>fct_funnel · fct_revenue<br/>dim_users · dim_products · dim_date"]
+        STG -->|"clean"| INT -->|"enrich"| MART
+    end
+
+    subgraph Warehouse [" 🏛️ DATA WAREHOUSE"]
+        DB[("DuckDB <i>(dev)</i><br/>BigQuery · Snowflake <i>(prod)</i>")]
+    end
+
+    subgraph Serve [" 📊 PRESENTATION"]
+        direction LR
+        DASH["🖥️ Streamlit Dashboard<br/><i>KPIs · Funnels · Cohorts</i>"]
+        DOCS["📖 dbt Docs & Lineage"]
+    end
+
+    subgraph Quality [" 🛡️ QUALITY & CI/CD"]
+        direction LR
+        TESTS["🧪 pytest · dbt test<br/>Great Expectations"]
+        CI["🚀 GitHub Actions<br/><i>Lint → Test → Build → Deploy</i>"]
     end
 
     E --> EX
@@ -67,21 +74,39 @@ flowchart LR
     U --> EX
     LO --> RAW
     LO --> PROC
-    SEED -.-> STG
+    SEED -.->|"ref data"| STG
     RAW --> STG
     PROC --> STG
     MART --> DB
     DB --> DASH
     DB --> DOCS
-    QA ~~~ dbt
+    Quality ~~~ Transform
 
-    style Sources fill:#e8f4fd,stroke:#2196F3,color:#000
-    style Ingestion fill:#fff3e0,stroke:#FF9800,color:#000
-    style Storage fill:#e8f5e9,stroke:#4CAF50,color:#000
-    style dbt fill:#fce4ec,stroke:#E91E63,color:#000
-    style DWH fill:#f3e5f5,stroke:#9C27B0,color:#000
-    style Presentation fill:#e0f2f1,stroke:#009688,color:#000
-    style QA fill:#fff8e1,stroke:#FFC107,color:#000
+    style Sources fill:#44475a,stroke:#bd93f9,stroke-width:2px,color:#f8f8f2
+    style Ingestion fill:#44475a,stroke:#ffb86c,stroke-width:2px,color:#f8f8f2
+    style Storage fill:#44475a,stroke:#50fa7b,stroke-width:2px,color:#f8f8f2
+    style Transform fill:#44475a,stroke:#ff79c6,stroke-width:2px,color:#f8f8f2
+    style Warehouse fill:#44475a,stroke:#bd93f9,stroke-width:2px,color:#f8f8f2
+    style Serve fill:#44475a,stroke:#8be9fd,stroke-width:2px,color:#f8f8f2
+    style Quality fill:#44475a,stroke:#f1fa8c,stroke-width:2px,color:#f8f8f2
+
+    style E fill:#282a36,stroke:#bd93f9,color:#f8f8f2
+    style P fill:#282a36,stroke:#bd93f9,color:#f8f8f2
+    style U fill:#282a36,stroke:#bd93f9,color:#f8f8f2
+    style EX fill:#282a36,stroke:#ffb86c,color:#f8f8f2
+    style VA fill:#282a36,stroke:#ffb86c,color:#f8f8f2
+    style LO fill:#282a36,stroke:#ffb86c,color:#f8f8f2
+    style RAW fill:#282a36,stroke:#50fa7b,color:#f8f8f2
+    style PROC fill:#282a36,stroke:#50fa7b,color:#f8f8f2
+    style SEED fill:#282a36,stroke:#50fa7b,color:#f8f8f2
+    style STG fill:#282a36,stroke:#ff79c6,color:#f8f8f2
+    style INT fill:#282a36,stroke:#ff79c6,color:#f8f8f2
+    style MART fill:#282a36,stroke:#ff79c6,color:#f8f8f2
+    style DB fill:#282a36,stroke:#bd93f9,color:#f8f8f2
+    style DASH fill:#282a36,stroke:#8be9fd,color:#f8f8f2
+    style DOCS fill:#282a36,stroke:#8be9fd,color:#f8f8f2
+    style TESTS fill:#282a36,stroke:#f1fa8c,color:#f8f8f2
+    style CI fill:#282a36,stroke:#f1fa8c,color:#f8f8f2
 ```
 
 ## Business Context
