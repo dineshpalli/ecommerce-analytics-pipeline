@@ -17,22 +17,71 @@ This project demonstrates a **production-grade analytics pipeline** for an e-com
 - **Interactive dashboards** for business stakeholders
 - **CI/CD automation** for reliable deployments
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        E-COMMERCE ANALYTICS PIPELINE                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌───────┐ │
-│  │  Events  │───▶│   ETL    │───▶│   dbt    │───▶│  Marts   │───▶│  BI   │ │
-│  │  (JSON)  │    │ Pipeline │    │ Models   │    │ (Facts/  │    │ Dash- │ │
-│  │          │    │          │    │          │    │  Dims)   │    │ board │ │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────┘    └───────┘ │
-│       │               │               │               │               │     │
-│       ▼               ▼               ▼               ▼               ▼     │
-│   Raw Events      Validated      Transformed      Analytics       Insights  │
-│   Clickstream     & Cleaned      & Enriched       Ready Data      & KPIs    │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Sources ["SOURCE SYSTEMS"]
+        E["Events\n(JSON/Parquet)"]
+        P["Product\nCatalog"]
+        U["User\nProfiles"]
+    end
+
+    subgraph Ingestion ["INGESTION LAYER — Python"]
+        EX["Extract\n(Pandas)"]
+        VA["Validate\n(Pydantic)"]
+        LO["Load\n(Parquet)"]
+        EX --> VA --> LO
+    end
+
+    subgraph Storage ["DATA LAKE"]
+        RAW["raw/"]
+        PROC["processed/"]
+        SEED["seeds/"]
+    end
+
+    subgraph dbt ["TRANSFORMATION LAYER — dbt"]
+        direction LR
+        STG["Staging\n─────────\nstg_events\nstg_products\nstg_users"]
+        INT["Intermediate\n─────────\nint_sessions\nint_user_journey\nint_product_perf"]
+        MART["Marts\n─────────\nfct_daily_engagement\nfct_funnel · fct_revenue\ndim_users · dim_products\ndim_date"]
+        STG --> INT --> MART
+    end
+
+    subgraph DWH ["DATA WAREHOUSE"]
+        DB[("DuckDB\n(dev)\n─────────\nBigQuery / Snowflake\n(prod)")]
+    end
+
+    subgraph Presentation ["PRESENTATION LAYER"]
+        DASH["Streamlit\nDashboard"]
+        DOCS["dbt Docs\n& Lineage"]
+    end
+
+    subgraph QA ["QUALITY & CI/CD"]
+        TESTS["pytest · dbt test\nGreat Expectations"]
+        CI["GitHub Actions\nLint → Test → Build"]
+    end
+
+    E --> EX
+    P --> EX
+    U --> EX
+    LO --> RAW
+    LO --> PROC
+    SEED -.-> STG
+    RAW --> STG
+    PROC --> STG
+    MART --> DB
+    DB --> DASH
+    DB --> DOCS
+    QA ~~~ dbt
+
+    style Sources fill:#e8f4fd,stroke:#2196F3,color:#000
+    style Ingestion fill:#fff3e0,stroke:#FF9800,color:#000
+    style Storage fill:#e8f5e9,stroke:#4CAF50,color:#000
+    style dbt fill:#fce4ec,stroke:#E91E63,color:#000
+    style DWH fill:#f3e5f5,stroke:#9C27B0,color:#000
+    style Presentation fill:#e0f2f1,stroke:#009688,color:#000
+    style QA fill:#fff8e1,stroke:#FFC107,color:#000
 ```
 
 ## Business Context
